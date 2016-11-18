@@ -1,0 +1,16 @@
+@action setData(content){
+    if(content) {
+        this.todotitle = content.todotitle;
+        this.todoItemList = Object.assign({},this.todoItemList, content.todoItem);
+        this.itemCount = Object.keys(this.todoItemList).length;
+    }
+
+}
+
+
+
+@action addorChangeItem = (key, value) => {
+    console.log("todoItemList",this.todoItemList);
+    console.log("key",key);
+    console.log("key",value);
+};

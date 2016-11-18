@@ -1,12 +1,18 @@
 import React,{ Component } from "react"
 import ReactDOM from "react-dom"
 
+import '../css/main.css'
+
+/*Stores*/
 import googleKeepStore from '../store/googlekeepstore';
 import addTodo from '../store/AddTodo';
-import DevTools from 'mobx-react-devtools';
-import { observer, Provider } from 'mobx-react';
+import editTodo from '../store/editTodo';
 
-import shortid from 'shortid';
+//For Debuggin
+import DevTools from 'mobx-react-devtools';
+
+import { observer, Provider } from 'mobx-react';
+import EditTodos from './editTodos';
 
 const app = document.getElementById("app")
 
@@ -15,34 +21,28 @@ class AddTodo extends Component {
 	constructor(){
 		super()
 		this.formSubmit = this.formSubmit.bind(this);
-		this.onFocus = this.onFocus.bind(this);
+		this.onChange = this.onChange.bind(this);
 	}
 
 	formSubmit(e){
 		e.preventDefault();
-		var newPost = {
-			"title": this.refs.textArea.value,
-			"todoItem":{}
-		};
+		// Assing New Todoitems to KeepStore
+        googleKeepStore.addTodo(addTodo.todotitle,addTodo.todoItemList);
 
-		for(var i = 0; i < addTodo.itemCount; i++ ){
-		    var content = this.refs.todoList.refs['todoItem'+i];
-		    console.log(content)
-		   // (content.value) && (newPost.todoItem['todoItem'+i] = content.value);
-		}
+        // Reset AddTodo Store By @action
+        addTodo.clearItems();
+        addTodo.clearTitle();
 
-		console.log(newPost);
+        //Clearing the Form
+        this.refs.form.reset();
 
-
-		googleKeepStore.addTodo(newPost);
 	}
 
-	onFocus(e){
-		var isLast = e.target.getAttribute('data-lastItem');
-		if(isLast === 'true') {
-			addTodo.onFocus(isLast)
-		}
-	}
+    onChange(e){
+        addTodo.changeTitle(e.target.value);
+    }
+
+
 
 	render(){
 		const { addTodo, googleKeepStore } = this.props;
@@ -50,11 +50,11 @@ class AddTodo extends Component {
 		
 		return (
 			<section>
-				<DevTools />
+
 				<div className="row">
 				        <section className="col-md-4 col-md-offset-4">
 				            <form ref="form" onSubmit={this.formSubmit}>
-				              <textarea ref="textArea"></textarea>
+				              <textarea ref="textArea" onChange={this.onChange}></textarea>
 				               <AddList ref="todoList" onFocus={this.onFocus}/>
 				              <button type="submit">Submit</button>
 				            </form>
@@ -67,16 +67,37 @@ class AddTodo extends Component {
 
 @observer(['addTodo'])
 class AddList extends Component {
+
+    constructor(props){
+        super(props);
+        this.onChange = this.onChange.bind(this);
+        this.onFocus = this.onFocus.bind(this);
+    }
+
+    onChange(e){
+        addTodo.addorChangeItem(e.target.getAttribute('data-itemKey'), e.target.value);
+    }
+
+    onFocus(e) {
+
+        let isLast = e.target.getAttribute('data-lastItem');
+        if(isLast === 'true') {
+            addTodo.onFocus(isLast)
+        }
+    }
+
 	render(){
-		const { addTodo, onFocus } = this.props;
+		const { addTodo} = this.props;
 		let todoList = [];
 		for(var i = 0; i < addTodo.itemCount; i++ ){
 			todoList.push( <input 
 								key={i} 
-								onFocus={onFocus} 
-								data-lastItem={((addTodo.itemCount - 1) === i) } 
-								type="text" 
-								ref={`todoItem${i}`} />  ) 
+								onChange={this.onChange}
+                                onFocus={this.onFocus}
+								data-lastItem={((addTodo.itemCount - 1) === i) }
+                                type="text"
+                                data-itemKey={`todoItem${i}`}
+                                ref={`todoItem${i}`} />  )
 		}
 
 		return (
@@ -89,11 +110,23 @@ class AddList extends Component {
 
 @observer(['googleKeepStore'])
 class ListTodo extends React.Component {
+    constructor(){
+        super();
+        this.editTodo = this.editTodo.bind(this);
+    }
+
+    editTodo(index){
+        const  { googleKeepStore } = this.props;
+        googleKeepStore.enableEditTodos(index);
+    }
+
 	render(){
 		return (
 			<section className="card-deck-wrapper">
+                <h2>Double Click on Card to Edit it </h2>
 			          <section className="card-deck">
-			            { googleKeepStore.todos.map( (todo,index) => <List details={todo} key={index} /> )}
+                          { JSON.stringify( googleKeepStore.todos, null, 4 ) }
+			            { googleKeepStore.todos.map( (todo, index) => <List editTodo={this.editTodo} details={todo} key={index} index={index} /> )}
 			          </section>
 			</section>
 			
@@ -102,37 +135,50 @@ class ListTodo extends React.Component {
 }
 
 
-const List = observer( ({ details }) => {
+const List = observer( ({ details, editTodo, index }) => {
 	const renderTodoContent = () => {
 		return Object.keys(details.todoItem).map( (item,index) => {
 		      return (
 		        <li key={index} className="list-group-item">
-		          {todoItem[item]}
+                    {details.todoItem[item]}
 		        </li>
 		      )
 		})
 	}
 
 	return (
-	 	<div className="card">
+	 	<div className="card" onDoubleClick={ () => editTodo(index) }>
 	     <div className="card-block">
-	        <h4 className="card-title"></h4>
+	        <h4 className="card-title"> { details.todotitle } </h4>
 	      </div>
 	      <ul className="list-group list-group-flush" >
-	       asdasdasdasd
+              {renderTodoContent()}
 	      </ul>
 		 </div>	
 		)
 	});
 
+
+
+
 var store = {
 	googleKeepStore,
-	addTodo
+	addTodo,
+    editTodo
 };
 
+
+const Todo = observer(['googleKeepStore'] ,({ children , googleKeepStore}) => (
+        <section>
+                { googleKeepStore.showEditTable ? <EditTodos /> : <AddTodo /> }
+        </section>
+
+));
+
 ReactDOM.render( <Provider {...store}> 
-						<section> 
-						  <AddTodo /> 
-						  <ListTodo /> 
+						<section>
+                            <DevTools />
+                            <Todo />
+                            <ListTodo />
 						</section>
 				</Provider>, app)
