@@ -29,11 +29,10 @@ import { observer, inject } from 'mobx-react';
         editTableStore['todotitle'] = temp.todotitle;
         editTableStore['todoItem'] = Object.assign({},temp.todoItem);
         editTodo.setData(editTableStore);
-
     }
 
     componentWillUnmount(){
-        this.cancelEdit();
+        //this.cancelEdit();
    }
     cancelEdit(){
         const { editTodo } = this.props;
@@ -59,8 +58,12 @@ import { observer, inject } from 'mobx-react';
                             </label>
 
                             <EditList  ref="todoList" />
-                            <button type="submit">Submit</button>
-                            <button type="submit" onClick={this.cancelEdit}>cancel</button>
+                            <button type="submit">
+                                Submit
+                            </button>
+                            <button type="submit" onClick={this.cancelEdit}>
+                                Cancel
+                            </button>
                         </form>
                     </section>
                 </div>
@@ -119,8 +122,7 @@ class EditList extends Component {
     render(){
         return (
             <p>
-
-                {this.renderTodoList()}
+               {this.renderTodoList()}
             </p>
         )
     }

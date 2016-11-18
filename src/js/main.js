@@ -1,5 +1,6 @@
 import React,{ Component } from "react"
 import ReactDOM from "react-dom"
+import { observer, Provider } from 'mobx-react';
 
 import '../css/main.css'
 
@@ -8,13 +9,11 @@ import googleKeepStore from '../store/googlekeepstore';
 import addTodo from '../store/AddTodo';
 import editTodo from '../store/editTodo';
 
-//For Debuggin
+//For Debugging
 import DevTools from 'mobx-react-devtools';
 
-import { observer, Provider } from 'mobx-react';
+// Custom Components
 import EditTodos from './editTodos';
-
-const app = document.getElementById("app")
 
 @observer(['googleKeepStore','addTodo'])
 class AddTodo extends Component {
@@ -167,7 +166,6 @@ var store = {
     editTodo
 };
 
-
 const Todo = observer(['googleKeepStore'] ,({ children , googleKeepStore}) => (
         <section>
                 { googleKeepStore.showEditTable ? <EditTodos /> : <AddTodo /> }
@@ -175,7 +173,10 @@ const Todo = observer(['googleKeepStore'] ,({ children , googleKeepStore}) => (
 
 ));
 
-ReactDOM.render( <Provider {...store}> 
+const app = document.getElementById("app");
+
+ReactDOM.render( <Provider
+                    {...store}>
 						<section>
                             <DevTools />
                             <Todo />
